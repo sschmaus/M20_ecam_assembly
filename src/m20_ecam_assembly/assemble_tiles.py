@@ -26,8 +26,8 @@ class M20_Image():
     #save image to file
     def save(self, filename=None):
         if filename is None:
-            new_filename = self.filename[:43]+ "_0A0" + self.filename[48:]
-            filename = self.dirname + "//testing//" + new_filename
+            new_filename = self.filename[:44]+ "_0A0" + self.filename[48:]
+            filename = self.dirname + "//" + new_filename
         cv.imwrite(filename, self.img)
         with open(filename[:-4]+"-metadata.json", 'w') as outfile:
             json.dump(self.metadata, outfile, indent=4)
@@ -324,6 +324,9 @@ class ECAM_composite(M20_Image):
         # if merged_composite.filename.downsample == "0":
         #     print("redebayering with VNG to remove zipper artefacts")
         #     merged_composite.redebayer()  
+        
+        #propagate new subframe rect to metadata
+        merged_composite.metadata["subframe_rect"] = [merged_composite.top_left_x*merged_composite.scale+1, merged_composite.top_left_x*merged_composite.scale+1, merged_composite.bottom_right_x*merged_composite.scale, merged_composite.bottom_right_y*merged_composite.scale]
 
         return merged_composite
     
@@ -338,7 +341,7 @@ def assemble_from_glob(input_pattern):
         if os.path.basename(file)[10:19] not in sclk:
             sclk.append(os.path.basename(file)[10:19])
             
-            tilepaths = glob(os.path.dirname(file) + "//" + "NLF*" + os.path.basename(file)[10:19] + "*J0?.png")
+            tilepaths = glob(os.path.dirname(file) + "//" + "NLF*" + os.path.basename(file)[10:19] + "*_???J0?.png")
             composite = ECAM_composite(tilepaths).composite
             print(composite.filename)
             composite.save()

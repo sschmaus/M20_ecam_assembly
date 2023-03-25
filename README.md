@@ -21,3 +21,5 @@ m20_ecam_assembly -i [glob pattern for the desired images]
 * add comments
 * clean up code (probably rewrite)
 * propagate changed image geometry into CAHVORE model parameters
+* add compatibility for tiles that are saved out of order (e.g. workspace mosaics)
+* make unstretch more robust, currently it considers every zero count histogram bin as a gap (ideally only count reliable bins and extraploate from there)
