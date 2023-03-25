@@ -7,17 +7,6 @@ import json
 from copy import deepcopy
 
 
-filenames=glob(".//0721//NLF_*_01_*.png")
-filenames=glob(".//0721//NLF_0721_0730952605_411ECM_N0345120NCAM00709_01_095J02.png")
-filenames=glob(".//0678//NLF_0678_0727131066_159ECM_N0320798NCAM08111_01_095J01.png")
-filenames=glob("F://3DStuff//3DScans//Mars//rawutils//Perseverance//0736//NLF_0736_0732291806_231ECM_N0370000NCAM00709_01_*.png")
-
-print(len(filenames), "files")
-
-
-
-
-
 class M20_Image():
     def __init__(self, file):
         self.img = cv.imread(file)
@@ -37,7 +26,8 @@ class M20_Image():
     #save image to file
     def save(self, filename=None):
         if filename is None:
-            filename = self.dirname + '//testing//' + self.filename
+            new_filename = self.filename[:43]+ "_0A0" + self.filename[48:]
+            filename = self.dirname + "//testing//" + new_filename
         cv.imwrite(filename, self.img)
         with open(filename[:-4]+"-metadata.json", 'w') as outfile:
             json.dump(self.metadata, outfile, indent=4)
@@ -337,7 +327,7 @@ class ECAM_composite(M20_Image):
 
         return merged_composite
     
-def main(input_pattern):
+def assemble_from_glob(input_pattern):
 
     filenames = glob(input_pattern)
     
@@ -356,6 +346,3 @@ def main(input_pattern):
 
             
     print(sclk)
-
-
-main("F:/3DStuff/3DScans/Mars/tools/0718/NLF*.png")

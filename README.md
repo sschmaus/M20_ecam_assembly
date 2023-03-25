@@ -4,4 +4,20 @@ WIP python script to reassemble the tiled images from the Mars 2020 engineering 
 
 The current implementation is very hacky and overly complicated but produces good results most of the time. 
 
-TODO: format into a package that can be installed with pip and called from the command line 
+## Installation
+
+```
+pip install git+https://github.com/sschmaus/m20_ecam_assembly.git
+```
+
+## Usage
+
+```
+m20_ecam_assembly -i [glob pattern for the desired images]
+```
+
+## TODO
+
+* add comments
+* clean up code (probably rewrite)
+* propagate changed image geometry into CAHVORE model parameters

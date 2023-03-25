@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "m20_ecam_assembly"
+version = "0.0.1"
+authors = [
+  { name="Simeon Schmauß"},
+]
+description = "A package to assemble the M20 engineering camera images"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "opencv-python",
+    "matplotlib"
+]
+
+[project.scripts]
+m20_ecam_assembly = "m20_ecam_assembly.main:main"
+
+[project.urls]
+"Homepage" = "https://github.com/sschmaus/M20_ecam_assembly"
+"Bug Tracker" = "https://github.com/sschmaus/M20_ecam_assembly/issues"
