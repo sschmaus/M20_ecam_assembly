@@ -2,7 +2,9 @@
 
 WIP python script to reassemble the tiled images from the Mars 2020 engineering cameras. 
 
-The current implementation is very hacky and overly complicated but produces good results most of the time. 
+The current implementation is very hacky and overly complicated and is in desperate need of a rewrite. 
+
+However, it but produces very good results for normal 2x2 and 4x4 tiled ECAM images
 
 ## Installation
 
@@ -18,7 +20,6 @@ m20_ecam_assembly -i [glob pattern for the desired images]
 
 ## TODO
 
-* add comments
 * clean up code (probably rewrite)
 * propagate changed image geometry into CAHVORE model parameters
 * add compatibility for tiles that are saved out of order (e.g. workspace mosaics)

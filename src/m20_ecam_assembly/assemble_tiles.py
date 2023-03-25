@@ -6,7 +6,7 @@ import os
 import json
 from copy import deepcopy
 
-
+#class that holds the Mars 2020 image and accompanying metadata
 class M20_Image():
     def __init__(self, file):
         self.img = cv.imread(file)
@@ -74,7 +74,7 @@ class M20_Image():
 
         return
 
-
+#class that parses the filname into its components
 class parsed_filename():
     def __init__(self, filename):
         self.filename = filename
@@ -113,7 +113,7 @@ class parsed_filename():
     def __str__(self):
         return self.filename
 
-
+#class that holds the ECAM tile image and accompanying metadata
 class ECAM_tile(M20_Image):
     def __init__(self, tilename):
         super().__init__(tilename)
@@ -136,7 +136,8 @@ class ECAM_tile(M20_Image):
         
     def __str__(self):
         return f"{self.filename}, {self.img.shape[0]} x {self.img.shape[1]} pixels, {self.img.shape[2]} band(s), dtype: {self.img.dtype}"
-        
+
+#class that holds the ECAM composite image and accompanying metadata        
 class ECAM_composite(M20_Image):
     def __init__(self, tilepaths):
         self.tiles = []
@@ -146,6 +147,7 @@ class ECAM_composite(M20_Image):
         self.pad_tiles(self.tiles, self.composite_size)
         self.composite = self.build_composite()
 
+    #determine composite size from the extent of the tiles
     def determine_composite_size(self, tiles):
         max_x = 0
         max_y = 0
@@ -157,12 +159,13 @@ class ECAM_composite(M20_Image):
                 max_y = tile.bottom_right_y
         return [max_y, max_x, 3]
     
+    #pad every tile to the output composite size to simplify overlap calculations
     def pad_tiles(self, tiles, composite_size):
         for tile in tiles:
             tile.img = np.pad(tile.img, [[tile.top_left_y, composite_size[0] - tile.bottom_right_y],[tile.top_left_x, composite_size[1] - tile.bottom_right_x],[0,0]], mode='empty')
         return
 
-
+    #calculate the rectangular overlap box between two tiles
     def calculate_overlap_box(self, tile1, tile2):
         y_overlap_max = tile1.bottom_right_y
         y_overlap_min = tile2.top_left_y
@@ -182,6 +185,7 @@ class ECAM_composite(M20_Image):
         overlap_box = [[y_overlap_min+2, y_overlap_max-2], [x_overlap_min+2, x_overlap_max-2]]
         return overlap_box
 
+    #calculate the integer brightness offset between two tiles
     def calculate_brightness_offset(self, tile1, tile2, overlap_box):
         tile1_brightness = np.mean(tile1.img[overlap_box[0][0]:overlap_box[0][1], overlap_box[1][0]:overlap_box[1][1]])
         tile2_brightness = np.mean(tile2.img[overlap_box[0][0]:overlap_box[0][1], overlap_box[1][0]:overlap_box[1][1]])
@@ -193,42 +197,18 @@ class ECAM_composite(M20_Image):
         
         return
 
-    def match_brightness(self, tiles):
-        row_lines = []
-        for tile in tiles:        
-            if tile.top_left_y not in row_lines:
-                row_lines.append(tile.top_left_y)
-        
-        rows = [[] for line in row_lines]
-
-        for tile in tiles:
-            for i in range(len(row_lines)):
-                if tile.top_left_y == row_lines[i]:
-                    rows[i].append(tile)
-        
-        for row in rows:
-            for tile in range(len(row)-1):
-                y_overlap_min = row[tile].top_left_y
-                y_overlap_max = row[tile].bottom_right_y
-                x_overlap_min = row[tile+1].top_left_x
-                x_overlap_max = row[tile].bottom_right_x
-
-                overlap_box = [[y_overlap_min, y_overlap_max], [x_overlap_min, x_overlap_max]]
-                print("row overlap: ", overlap_box)
-
-                self.calculate_brightness_offset(row[tile], row[tile+1], overlap_box)
-            
-        return self
-
+    #############      main compositing function         ############
     def build_composite(self):
+        #make new numpy array for composite
         self.composite = np.zeros(self.composite_size, dtype=np.uint8)
 
-        #match brightness and merge tiles
+        #calculate the different row lines based on the top left y coordinate of each tile
         row_lines = []
         for tile in self.tiles:        
             if tile.top_left_y not in row_lines:
                 row_lines.append(tile.top_left_y)
         
+        #sort tiles into rows
         tile_rows = [[] for line in row_lines]
         merged_rows = []
         merged_composite = []
@@ -265,7 +245,6 @@ class ECAM_composite(M20_Image):
                 print("working on row: ", row_index)
                 print("min brightness difference tiles: ", min_offset)
                 tile.img += np.uint8(tile.brightness_offset - min_offset)
-                # merged_rows[row_index].img[tile.top_left_y:tile.bottom_right_y, tile.top_left_x+8:tile.bottom_right_x-8] = tile.img[tile.top_left_y:tile.bottom_right_y, tile.top_left_x+8:tile.bottom_right_x-8]
                 merged_rows[row_index].img[tile.top_left_y:tile.bottom_right_y, tile.border_left:tile.border_right] = tile.img[tile.top_left_y:tile.bottom_right_y, tile.border_left:tile.border_right]
                 print("merging tile at", [[tile.top_left_y,tile.bottom_right_y],[tile.border_left,tile.border_right]])
 
@@ -321,10 +300,6 @@ class ECAM_composite(M20_Image):
 
             print("merged composite extent: ",[[merged_composite.top_left_y,merged_composite.bottom_right_y],[merged_composite.top_left_x,merged_composite.bottom_right_x]])
 
-        # if merged_composite.filename.downsample == "0":
-        #     print("redebayering with VNG to remove zipper artefacts")
-        #     merged_composite.redebayer()  
-        
         #propagate new subframe rect to metadata
         merged_composite.metadata["subframe_rect"] = [merged_composite.top_left_x*merged_composite.scale+1, merged_composite.top_left_x*merged_composite.scale+1, merged_composite.bottom_right_x*merged_composite.scale, merged_composite.bottom_right_y*merged_composite.scale]
 
@@ -341,7 +316,7 @@ def assemble_from_glob(input_pattern):
         if os.path.basename(file)[10:19] not in sclk:
             sclk.append(os.path.basename(file)[10:19])
             
-            tilepaths = glob(os.path.dirname(file) + "//" + "NLF*" + os.path.basename(file)[10:19] + "*_???J0?.png")
+            tilepaths = glob(os.path.dirname(file) + "//" + "N?F*" + os.path.basename(file)[10:19] + "*_???J0?.png")
             composite = ECAM_composite(tilepaths).composite
             print(composite.filename)
             composite.save()
