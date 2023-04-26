@@ -309,18 +309,18 @@ def assemble_from_glob(input_pattern):
 
     filenames = glob(input_pattern)
     
-    sclk = []
+    unique_identifiers = []
 
     for file in filenames:
         ##check if os.path.basename(file)[10:19] is in sclk, if not append it
-        if os.path.basename(file)[10:19] not in sclk:
-            sclk.append(os.path.basename(file)[10:19])
+        if os.path.basename(file)[0:19] not in unique_identifiers:
+            unique_identifiers.append(os.path.basename(file)[0:19])
             
-            tilepaths = glob(os.path.dirname(file) + "//" + "N?F*" + os.path.basename(file)[10:19] + "*_???J0?.png")
+            tilepaths = glob(os.path.dirname(file) + "//" + os.path.basename(file)[0:19] + "*_???J??.png")
             composite = ECAM_composite(tilepaths).composite
             print(composite.filename)
             composite.save()
 
 
             
-    print(sclk)
+    print(unique_identifiers)
